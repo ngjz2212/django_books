@@ -1,6 +1,6 @@
 from django.contrib import admin
 from datetime import datetime
-from core.models import Book, Author, Publication, STATUS_CHOICES
+from core.models import Book, Author, Publication, STATUS_CHOICES, SERIES_CHOICES
 from django.http import HttpResponse
 from django.forms import ModelForm
 from django import forms
@@ -61,8 +61,12 @@ class PublicationAdmin(admin.ModelAdmin):
 
 
     def formfield_for_choice_field(self, db_field, request, **kwargs):
-        if db_field.name == "status":
-            kwargs['choices'] = STATUS_CHOICES[:2]
+        curr_user = request.user.username
+        if db_field.name == "series":
+            if curr_user.startswith('A'):
+                kwargs['choices'] = SERIES_CHOICES[:6]
+            if curr_user.startswith('B'):
+                kwargs['choices'] = SERIES_CHOICES[6:] 
         return super().formfield_for_choice_field(db_field, request, **kwargs)
 
     list_display = ["release_no","isbn","title","publication_remarks","status"]

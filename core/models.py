@@ -27,8 +27,21 @@ STATUS_CHOICES = [
     ('w', 'Withdrawn'),
 ]
 
+SERIES_CHOICES = [
+    ('A1', 'A1'),
+    ('A2', 'A2'),
+    ('A3', 'A3'),
+    ('A4', 'A4'),
+    ('A5', 'A5'),
+    ('A6', 'A6'),
+    ('B1', 'B1'),
+    ('B2', 'B2'),
+    ('B3', 'B3')
+]
+
 class Publication(models.Model):
     release_no = models.CharField("Release No",max_length=200)
+    series = models.CharField(max_length=2, choices=SERIES_CHOICES)
     isbn = models.CharField("ISBN",max_length=200)
     title = models.CharField("Title",max_length=200)
     publication_remarks = models.TextField("Remarks")
