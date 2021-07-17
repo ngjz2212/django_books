@@ -1,7 +1,9 @@
 from django.contrib import admin
 from datetime import datetime
-from core.models import Book, Author, Publication
+from core.models import Book, Author, Publication, STATUS_CHOICES
 from django.http import HttpResponse
+from django.forms import ModelForm
+from django import forms
 import csv
 # Register your models here.
 
@@ -44,7 +46,7 @@ class BookAdmin(admin.ModelAdmin):
 class AuthorAdmin(admin.ModelAdmin):
     list_display = ["author_id","name","writing_level","publisher_id"]
     list_filter = ["publisher_id"]
-
+  
 
 @admin.register(Publication)
 class PublicationAdmin(admin.ModelAdmin):
@@ -56,6 +58,12 @@ class PublicationAdmin(admin.ModelAdmin):
     def make_withdrawn(modeladmin, request, queryset):
         queryset.update(status='w')
     make_withdrawn.short_description = "Withdraw selected books"
+
+
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        if db_field.name == "status":
+            kwargs['choices'] = STATUS_CHOICES[:2]
+        return super().formfield_for_choice_field(db_field, request, **kwargs)
 
     list_display = ["release_no","isbn","title","publication_remarks","status"]
     list_filter = ["release_no"]
