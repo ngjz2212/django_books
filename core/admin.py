@@ -30,7 +30,11 @@ admin.site.add_action(export_to_csv) ## Apply function globally
 
 
 @admin.register(Book)
-class BookAdmin(admin.ModelAdmin):    
+class BookAdmin(admin.ModelAdmin):
+    # References for sortable intermediate page
+    # https://jqueryui.com/sortable/
+    # https://stackoverflow.com/questions/6583877/how-to-override-and-extend-basic-django-admin-templates
+    # https://www.willandskill.se/en/custom-django-admin-actions-with-an-intermediate-page/
     list_display = ["title","isbn","author","summary"]
     list_filter = ["author",]
     list_per_page = 250
