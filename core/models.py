@@ -14,12 +14,14 @@ class Book(models.Model):
     isbn = models.CharField("ISBN",max_length=200)
     title = models.CharField("Title",max_length=200)
     summary = models.TextField("Plot")
+    my_order = models.PositiveIntegerField(default=0, blank=False, null=False)
 
     def __str__(self):
         return self.title
 
     class Meta:
         verbose_name_plural = "Books"
+        ordering = ['my_order']
 
 STATUS_CHOICES = [
     ('d', 'Draft'),
@@ -40,6 +42,7 @@ SERIES_CHOICES = [
 ]
 
 class Publication(models.Model):
+    priority_no = models.PositiveIntegerField(default=0, blank=False, null=False)
     release_no = models.CharField("Release No",max_length=200)
     series = models.CharField(max_length=2, choices=SERIES_CHOICES)
     isbn = models.CharField("ISBN",max_length=200)
@@ -52,5 +55,6 @@ class Publication(models.Model):
 
     class Meta:
         verbose_name_plural = "Publications"
+        ordering = ['priority_no']
 
 

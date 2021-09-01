@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admindocs', ## ADMIN-DOC
     'core', ## CORE
+    'django_object_actions',
 ]
 
 MIDDLEWARE = [

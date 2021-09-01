@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+{% block extrahead %}
+<!-- <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"> -->
+  <style>
+  #sortable { list-style-type: none; margin: 0; padding: 0; width: 60%; }
+  #sortable li { margin: 0 3px 3px 3px; padding: 0.4em; padding-left: 1.5em; font-size: 1.4em; height: 18px; }
+  #sortable li span { position: absolute; margin-left: -1.3em; }
+  </style>
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script>
+  $( function() {
+    $( "#sortable" ).sortable();
+    $( "#sortable" ).disableSelection();
+  } );
+  </script>
+
+{% endblock %}
+
+{% block content %}
+
+<form action="" method="post">
+  {% csrf_token %}
+<p>
+Please order your books
+</p>  
+  <ul id="sortable">
+  {% for order in orders %}
+      <li class="ui-state-default"><input type="hidden" name="_selected_action" value="{{ order.pk }}" />{{ order.pk }}: {{ order }}</li>
+  {% endfor %}
+  </ul>
+
+  <input type="hidden" name="action" value="publish" />
+  <input type="submit" name="apply" value="Publish"/>
+</form>
+{% endblock %}

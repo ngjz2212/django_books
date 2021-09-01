@@ -5,6 +5,10 @@ from django.http import HttpResponse
 from django.forms import ModelForm
 from django import forms
 import csv
+from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import render
+from django.http import HttpResponseRedirect
+
 # Register your models here.
 
 def export_to_csv(self, request, queryset):
@@ -34,13 +38,35 @@ class BookAdmin(admin.ModelAdmin):
     fields = ["title","isbn","author",]
 
     actions = ["publish"]
-    def publish(modeladmin, request, queryset):
-        for book in queryset:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            p = Publication(release_no=timestamp,isbn=book.isbn,title=book.title,publication_remarks=book.summary)
-            p.save()
+    
+    def publish(self, request, queryset):
+        # All requests here will actually be of type POST 
+        # so we will need to check for our special key 'apply' 
+        # rather than the actual request type
+        if 'apply' in request.POST:
+            # The user clicked submit on the intermediate form.
+            # Perform our update action:
+            priority_list = request.POST.copy().pop('_selected_action')
+            print(priority_list)
+            for book in queryset:
+                priority = priority_list.index(str(book.pk)) + 1
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                p = Publication(priority_no=priority,release_no=timestamp,isbn=book.isbn,title=book.title,publication_remarks=book.summary,series='A1')
+                p.save()
+            
+            # Redirect to our admin view after our update has 
+            # completed with a nice little info message saying 
+            # our models have been updated:
+            self.message_user(request, "Successfully published {} books".format(queryset.count()))
+            return HttpResponseRedirect(request.get_full_path())
+                        
+        return render(request,
+                      'admin/order_intermediate.html',
+                      context={'orders':queryset})
+        
     publish.short_description = "Draft selected books for publication"
 
+    change_list_template = "admin/change_list_filter_sidebar.html"
 
 @admin.register(Author)
 class AuthorAdmin(admin.ModelAdmin):
@@ -69,7 +95,6 @@ class PublicationAdmin(admin.ModelAdmin):
                 kwargs['choices'] = SERIES_CHOICES[6:] 
         return super().formfield_for_choice_field(db_field, request, **kwargs)
 
-    list_display = ["release_no","isbn","title","publication_remarks","status"]
+    list_display = ["title","priority_no","release_no","isbn","publication_remarks","status","series"]
+    list_editable = ["priority_no",'status','series']
     list_filter = ["release_no"]
-
-
