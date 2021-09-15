@@ -8,6 +8,8 @@ import csv
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
+from django.urls import path
+import pandas as pd
 
 # Register your models here.
 
@@ -28,6 +30,9 @@ export_to_csv.short_description = 'Export to CSV'  #short description
 
 admin.site.add_action(export_to_csv) ## Apply function globally
 
+## Add import from CSV button
+class CsvImportForm(forms.Form):
+    csv_file = forms.FileField()
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
@@ -70,7 +75,36 @@ class BookAdmin(admin.ModelAdmin):
         
     publish.short_description = "Draft selected books for publication"
 
-    change_list_template = "admin/change_list_filter_sidebar.html"
+    # We can only import Books by CSV
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('import-csv/', self.import_csv),
+        ]
+        return my_urls + urls
+
+    
+    def import_csv(self, request):
+        if request.method == "POST":
+            csv_file = request.FILES["csv_file"]
+            df = pd.read_csv(csv_file)
+            count = 0
+            for idx, row in df.iterrows():
+                if count > 10:
+                    break
+                print(row)
+                count = count + 1
+            # Create Book objects from passed in data
+            # ...
+            self.message_user(request, "Your csv file has been imported")
+            return HttpResponseRedirect(request.get_full_path())
+        form = CsvImportForm()
+        payload = {"form": form}
+        return render(
+            request, "admin/csv_form.html", payload
+        )
+
+    change_list_template = "admin/book_changelist.html"
 
 @admin.register(Author)
 class AuthorAdmin(admin.ModelAdmin):
