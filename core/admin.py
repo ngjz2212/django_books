@@ -1,6 +1,6 @@
 from django.contrib import admin
 from datetime import datetime
-from core.models import Book, Author, Publication, STATUS_CHOICES, SERIES_CHOICES
+from core.models import Book, Publication, STATUS_CHOICES, SERIES_CHOICES
 from django.http import HttpResponse
 from django.forms import ModelForm
 from django import forms
@@ -10,6 +10,7 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.urls import path
 import pandas as pd
+from core.forms import UploadFileForm
 
 # Register your models here.
 
@@ -30,24 +31,19 @@ export_to_csv.short_description = 'Export to CSV'  #short description
 
 admin.site.add_action(export_to_csv) ## Apply function globally
 
-## Add import from CSV button
-class CsvImportForm(forms.Form):
-    csv_file = forms.FileField()
-
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     # References for sortable intermediate page
     # https://jqueryui.com/sortable/
     # https://stackoverflow.com/questions/6583877/how-to-override-and-extend-basic-django-admin-templates
     # https://www.willandskill.se/en/custom-django-admin-actions-with-an-intermediate-page/
-    list_display = ["title","isbn","author","summary"]
-    list_filter = ["author",]
+    list_display = [field.name for field in Book._meta.get_fields() if field.name != 'id']
     list_per_page = 250
     search_fields = ["title__startswith", ]
-    fields = ["title","isbn","author",]
 
     actions = ["publish"]
     
+    @admin.action(description="Draft selected books for publication")
     def publish(self, request, queryset):
         # All requests here will actually be of type POST 
         # so we will need to check for our special key 'apply' 
@@ -60,7 +56,7 @@ class BookAdmin(admin.ModelAdmin):
             for book in queryset:
                 priority = priority_list.index(str(book.pk)) + 1
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                p = Publication(priority_no=priority,release_no=timestamp,isbn=book.isbn,title=book.title,publication_remarks=book.summary,series='A1')
+                p = Publication(priority_no=priority,book_title=book.title,publication_remarks=book.summary,series='A1',book_pdf=book.pdf_file)
                 p.save()
             
             # Redirect to our admin view after our update has 
@@ -71,45 +67,29 @@ class BookAdmin(admin.ModelAdmin):
                         
         return render(request,
                       'admin/order_intermediate.html',
-                      context={'orders':queryset})
-        
-    publish.short_description = "Draft selected books for publication"
+                      context={'orders':queryset})    
 
-    # We can only import Books by CSV
-    def get_urls(self):
-        urls = super().get_urls()
-        my_urls = [
-            path('import-csv/', self.import_csv),
-        ]
-        return my_urls + urls
-
-    
-    def import_csv(self, request):
-        if request.method == "POST":
-            csv_file = request.FILES["csv_file"]
-            df = pd.read_csv(csv_file)
-            count = 0
-            for idx, row in df.iterrows():
-                if count > 10:
-                    break
-                print(row)
-                count = count + 1
-            # Create Book objects from passed in data
-            # ...
-            self.message_user(request, "Your csv file has been imported")
-            return HttpResponseRedirect(request.get_full_path())
-        form = CsvImportForm()
-        payload = {"form": form}
-        return render(
-            request, "admin/csv_form.html", payload
-        )
+    # def import_csv(self, request):
+    #     if request.method == "POST":
+    #         csv_file = request.FILES["csv_file"]
+    #         df = pd.read_csv(csv_file)
+    #         count = 0
+    #         for idx, row in df.iterrows():
+    #             if count > 10:
+    #                 break
+    #             print(row)
+    #             count = count + 1
+    #         # Create Book objects from passed in data
+    #         # ...
+    #         self.message_user(request, "Your csv file has been imported")
+    #         return HttpResponseRedirect(request.get_full_path())
+    #     form = CsvImportForm()
+    #     payload = {"form": form}
+    #     return render(
+    #         request, "admin/csv_form.html", payload
+    #     )
 
     change_list_template = "admin/book_changelist.html"
-
-@admin.register(Author)
-class AuthorAdmin(admin.ModelAdmin):
-    list_display = ["author_id","name","writing_level","publisher_id"]
-    list_filter = ["publisher_id"]
   
 
 @admin.register(Publication)
@@ -133,6 +113,5 @@ class PublicationAdmin(admin.ModelAdmin):
                 kwargs['choices'] = SERIES_CHOICES[6:] 
         return super().formfield_for_choice_field(db_field, request, **kwargs)
 
-    list_display = ["title","priority_no","release_no","isbn","publication_remarks","status","series"]
+    list_display = [field.name for field in Publication._meta.get_fields() if field.name != 'id']
     list_editable = ["priority_no",'status','series']
-    list_filter = ["release_no"]

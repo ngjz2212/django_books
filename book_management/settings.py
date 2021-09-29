@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admindocs', ## ADMIN-DOC
     'core', ## CORE
-    'django_object_actions',
 ]
 
 MIDDLEWARE = [
@@ -133,4 +132,10 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, '/staticfiles/jquery/'),
 )
 # #############################################################
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 # #############################################################
+
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None
